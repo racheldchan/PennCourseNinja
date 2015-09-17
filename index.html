@@ -1,0 +1,129 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>PennCourseNinja</title>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/2.1.1/fullcalendar.min.css">
+    <script src="https://code.jquery.com/jquery-2.1.1.min.js"></script>
+    <script src="typeahead.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.8.2/moment.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/fullcalendar/2.1.1/fullcalendar.min.js"></script>
+
+    <!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="style.css">
+    
+    <script type="text/javascript" color="white">
+
+      $(function () {
+        var typeahead = $('#course').typeahead({
+          minLength: 2,
+          highlight: true
+        }, {
+          name: 'courses',
+          displayKey: String,
+          source: function (query, cb) {
+            // query -> what the user typed (e.g. CIS)
+            $.getJSON('/courses?query=' + query, cb)
+          }
+        })
+
+        $('#course').bind('typeahead:selected', function (obj, course) {
+          $('ul.selected-courses').append($('<li>').text(course))
+          $(this).val('')
+        })
+
+        $('#generate').click(function () {
+          $('#schedule tbody').empty()
+
+          // Look in the ul, finding each li to get the course.
+          var selected = $.map($('ul li'), function (li) {
+            return $(li).text()
+          })
+
+          // selected in an array of all their selected classes... let's send
+          // it to the server, so the server can generate the schedule
+          
+          $.getJSON('/schedule', {
+            courses: selected
+          }, function (response) {
+            var events = []
+            response.forEach(function (course) {
+              var meetings = course.meetings[0]
+                , days = meetings.meeting_days
+                , dayOfWeek = {
+                  M: '01',
+                  T: '02',
+                  W: '03',
+                  R: '04',
+                  F: '05'
+                }
+
+              for (var i = 0; i < days.length; i++) {
+                var day = days[i]
+
+                events.push({
+                  title: course.course_department + course.course_number + '  ' + course.section_number,
+                  start: '2014-09-' + dayOfWeek[day] + 'T' + ('0' + meetings.start_hour_24).slice(-2) + ':' + (meetings.start_minutes + '0').substring(0, 2) + ':00',
+                  end: '2014-09-' + dayOfWeek[day] + 'T' + ('0' + meetings.end_hour_24).slice(-2) + ':' + (meetings.end_minutes + '0').substring(0, 2) + ':00'
+                })
+              }
+            })
+
+            $('#calendar').fullCalendar('destroy')
+
+            $('#calendar').fullCalendar({
+                defaultView: 'basicWeek',
+                editable: false,
+                defaultDate: '2014-09-01',
+                hiddenDays: [ 6, 0 ],
+                header: false,
+                firstDay: '2014-09-01', // Monday, first day of the calendar
+                events: events
+            })
+            // hack to remove the dates
+            $('th.fc-widget-header ').each(function (header) {
+              $(this).text($(this).text().substring(0, 3))
+            })
+          })
+        })
+      })
+    </script>
+  </head>
+<style>
+  body {background-color:black}
+  h1   {color:white}
+  p    {color:green}
+</style>
+
+  </body>
+    <div>
+      <h1 style = "font-size:50px">Penn Course Ninja</h1>
+
+      <div>
+        <!-- <label>Department or Course</label> -->
+        <input class="typeahead" type="text" id="course" placeholder="Enter Department or Course" />
+      </div>
+
+      <div class= "outer-course-container">
+        <label style = "font-size:24px; color:white;">Ninja Cart</label>
+        <br>
+      <div class="course-container">
+        <ul style = "list-style-type:none; text-align:left; font-size:24px" class="selected-courses">
+        </ul>
+      </div>
+      </div>
+
+      <div style= "margin-left:480px; margin-top:15px;" class= "col-md-3 center-block">
+        <button class="btn btn-large btn-primary" style= "height:40px; width:150px;" type="button" id="generate">Generate Schedule</button>
+      </div>
+    </div>
+
+      <div id="output">
+        <div id="calendar"></div>
+      </div>
+    </div>
+  </body>
+</html>

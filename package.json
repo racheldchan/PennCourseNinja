@@ -1,0 +1,21 @@
+{
+  "name": "PennApps",
+  "version": "1.0.0",
+  "description": "This is Rachel and Med's badass project.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [
+    "Penn",
+    "PennApps",
+    "Rachel",
+    "Med",
+    "badass"
+  ],
+  "author": "Rachel Chan <rachan@seas.upenn.edu>",
+  "license": "ISC",
+  "dependencies": {
+    "request": "^2.42.0"
+  }
+}
